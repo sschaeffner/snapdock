@@ -1,4 +1,4 @@
-FROM debian:12 as build
+FROM debian:12 as build-snapcast
 
 ARG GIT_COMMIT="v0.27.0"
 ARG BOOST_VERSION="1_83_0"
@@ -39,15 +39,57 @@ RUN git clone https://github.com/librespot-org/librespot.git \
 RUN cd librespot \
     && cargo build --release --no-default-features --features "alsa-backend"
 
+FROM debian:12 as build-shairport
+
+ARG GIT_COMMIT="4.3.2"
+
+RUN apt-get update && apt-get upgrade -y --no-install-recommends
+RUN apt-get install -y --no-install-recommends ca-certificates git build-essential autoconf automake libtool libpopt-dev libconfig-dev libasound2-dev avahi-daemon libavahi-client-dev libssl-dev libsoxr-dev
+
+WORKDIR /shairport
+
+RUN git clone https://github.com/mikebrady/shairport-sync.git \
+    && cd shairport-sync \
+    && git checkout ${GIT_COMMIT}
+
+RUN cd shairport-sync \
+    && autoreconf -fi \
+    && ./configure --sysconfdir=/etc --with-ssl=openssl --with-metadata --with-stdout --with-pipe --with-avahi \
+    && make \
+    && make install
+
+
 FROM debian:12
 WORKDIR /app
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends
-RUN apt-get install -y --no-install-recommends libasound2-dev libpulse-dev libvorbisidec-dev libvorbis-dev libopus-dev libflac-dev libsoxr-dev alsa-utils libavahi-client-dev avahi-daemon libexpat1-dev
+RUN apt-get install -y --no-install-recommends  \
+    procps \
+    libasound2-dev  \
+    libpulse-dev  \
+    libvorbisidec-dev  \
+    libvorbis-dev  \
+    libopus-dev  \
+    libflac-dev  \
+    libsoxr-dev  \
+    alsa-utils  \
+    libavahi-client-dev  \
+    avahi-daemon  \
+    libnss-mdns \
+    libexpat1-dev \
+    libtool  \
+    libpopt-dev  \
+    libconfig-dev  \
+    libssl-dev
 
-COPY --from=build /app/snapcast/bin/* /app/
+COPY --from=build-snapcast /app/snapcast/bin/* /app/
 COPY --from=build-librespot /librespot/librespot/target/release/librespot /app/
+COPY --from=build-shairport /shairport/shairport-sync/shairport-sync /app/
+COPY avahi.conf /etc/avahi/avahi-daemon.conf
+CMD mkdir -p /run/dbus
+COPY run.sh /app/run.sh
 
-ENTRYPOINT /app/snapserver
-#CMD avahi-daemon --daemonize --no-drop-root &; /app/snapserver
+#ENTRYPOINT /app/snapserver
+CMD /app/run.sh
+#CMD avahi-daemon --daemonize --no-drop-root && /app/snapserver
 EXPOSE 1704/tcp 1705/tcp 1780

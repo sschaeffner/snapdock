@@ -8,6 +8,7 @@ services:
       - "1704:1704/tcp"
       - "1705:1705/tcp"
       - "1780:1780"
+      - "5000:5000"
     network_mode: host
     environment:
       hello: world
