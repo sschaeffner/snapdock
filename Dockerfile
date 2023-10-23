@@ -24,6 +24,21 @@ RUN cd snapcast \
     && cmake .. -DBUILD_SERVER=ON -DBUILD_CLIENT=OFF -DBUILD_WITH_PULSE=OFF -DBOOST_ROOT=/boost/boost \
     && cmake --build .
 
+FROM node as build-snapweb
+ARG GIT_COMMIT="react"
+
+RUN apt-get update && apt-get upgrade -y --no-install-recommends
+
+WORKDIR /app
+
+RUN git clone https://github.com/badaix/snapweb.git \
+    && cd snapweb \
+    && git checkout ${GIT_COMMIT}
+
+RUN cd snapweb \
+    && npm ci \
+    && npm run build
+
 FROM rust:1-bookworm as build-librespot
 
 ARG GIT_COMMIT="v0.4.2"
@@ -83,6 +98,7 @@ RUN apt-get install -y --no-install-recommends  \
     libssl-dev
 
 COPY --from=build-snapcast /app/snapcast/bin/* /app/
+COPY --from=build-snapweb /app/snapweb/build /app/snapweb
 COPY --from=build-librespot /librespot/librespot/target/release/librespot /app/
 COPY --from=build-shairport /shairport/shairport-sync/shairport-sync /app/
 COPY avahi.conf /etc/avahi/avahi-daemon.conf
