@@ -1,13 +1,14 @@
 FROM debian:12 as build-snapcast
 
-ARG GIT_COMMIT="v0.27.0"
-ARG BOOST_VERSION="1_83_0"
+ARG GIT_COMMIT="v0.29.0"
+ARG BOOST_VERSION_1="1.86.0"
+ARG BOOST_VERSION_2="1_86_0"
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends
 RUN apt-get install -y --no-install-recommends ca-certificates wget git build-essential cmake libasound2-dev libpulse-dev libvorbisidec-dev libvorbis-dev libopus-dev libflac-dev libsoxr-dev alsa-utils libavahi-client-dev avahi-daemon libexpat1-dev
 
 WORKDIR /boost
-RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_${BOOST_VERSION}.tar.gz -O boost.tar.gz \
+RUN wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION_1}/source/boost_${BOOST_VERSION_2}.tar.gz -O boost.tar.gz \
     && tar xf ./boost.tar.gz \
     && rm ./boost.tar.gz \
     && mv ./boost* ./boost
@@ -41,7 +42,7 @@ RUN cd snapweb \
 
 FROM rust:1-bookworm as build-librespot
 
-ARG GIT_COMMIT="v0.4.2"
+ARG GIT_COMMIT="v0.5.0"
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends
 RUN apt-get install -y --no-install-recommends ca-certificates git build-essential pkg-config libasound2-dev
@@ -56,7 +57,7 @@ RUN cd librespot \
 
 FROM debian:12 as build-shairport
 
-ARG GIT_COMMIT="4.3.2"
+ARG GIT_COMMIT="4.3.4"
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends
 RUN apt-get install -y --no-install-recommends ca-certificates git build-essential autoconf automake libtool libpopt-dev libconfig-dev libasound2-dev avahi-daemon libavahi-client-dev libssl-dev libsoxr-dev
