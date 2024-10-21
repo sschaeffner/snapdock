@@ -80,6 +80,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends
 RUN apt-get install -y --no-install-recommends  \
+    ca-certificates \
     procps \
     libasound2-dev  \
     libpulse-dev  \
