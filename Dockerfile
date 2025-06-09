@@ -8,7 +8,7 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends
 RUN apt-get install -y --no-install-recommends ca-certificates wget git build-essential cmake libasound2-dev libpulse-dev libvorbisidec-dev libvorbis-dev libopus-dev libflac-dev libsoxr-dev alsa-utils libavahi-client-dev avahi-daemon libexpat1-dev
 
 WORKDIR /boost
-RUN wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION_1}/source/boost_${BOOST_VERSION_2}.tar.gz -O boost.tar.gz \
+RUN wget https://archives.boost.io/release/${BOOST_VERSION_1}/source/boost_${BOOST_VERSION_2}.tar.gz -O boost.tar.gz \
     && tar xf ./boost.tar.gz \
     && rm ./boost.tar.gz \
     && mv ./boost* ./boost
