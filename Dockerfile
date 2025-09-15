@@ -1,11 +1,11 @@
 FROM debian:12 as build-snapcast
 
-ARG GIT_COMMIT="v0.29.0"
-ARG BOOST_VERSION_1="1.86.0"
-ARG BOOST_VERSION_2="1_86_0"
+ARG GIT_COMMIT="v0.32.3"
+ARG BOOST_VERSION_1="1.89.0"
+ARG BOOST_VERSION_2="1_89_0"
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends
-RUN apt-get install -y --no-install-recommends ca-certificates wget git build-essential cmake libasound2-dev libpulse-dev libvorbisidec-dev libvorbis-dev libopus-dev libflac-dev libsoxr-dev alsa-utils libavahi-client-dev avahi-daemon libexpat1-dev
+RUN apt-get install -y --no-install-recommends ca-certificates wget git build-essential cmake cmake-format ccache ninja-build alsa-utils avahi-daemon libasound2-dev libavahi-client-dev libboost-dev libexpat1-dev libflac-dev libjack-dev libopus-dev libpulse-dev libsoxr-dev libssl-dev libvorbis-dev libvorbisidec-dev
 
 WORKDIR /boost
 RUN wget https://archives.boost.io/release/${BOOST_VERSION_1}/source/boost_${BOOST_VERSION_2}.tar.gz -O boost.tar.gz \
@@ -42,7 +42,7 @@ RUN cd snapweb \
 
 FROM rust:1-bookworm as build-librespot
 
-ARG GIT_COMMIT="v0.5.0"
+ARG GIT_COMMIT="v0.7.1"
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends
 RUN apt-get install -y --no-install-recommends ca-certificates git build-essential pkg-config libasound2-dev
@@ -53,11 +53,11 @@ RUN git clone https://github.com/librespot-org/librespot.git \
     && git checkout ${GIT_COMMIT}
 
 RUN cd librespot \
-    && cargo build --release --no-default-features --features "alsa-backend"
+    && cargo build --release --no-default-features --features "alsa-backend native-tls with-libmdns"
 
 FROM debian:12 as build-shairport
 
-ARG GIT_COMMIT="4.3.4"
+ARG GIT_COMMIT="4.3.7"
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends
 RUN apt-get install -y --no-install-recommends ca-certificates git build-essential autoconf automake libtool libpopt-dev libconfig-dev libasound2-dev avahi-daemon libavahi-client-dev libssl-dev libsoxr-dev
