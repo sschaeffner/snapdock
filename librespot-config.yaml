@@ -5,6 +5,8 @@ audio_backend: "pipe"
 audio_output_pipe: "/dev/stdout"
 audio_output_pipe_format: "s16le"
 
+initial_volume: 50
+
 bitrate: 320
 
 normalisation_disabled: false
