@@ -1,6 +1,6 @@
 FROM debian:12 as build-snapcast
 
-ARG GIT_COMMIT="v0.32.3"
+ARG GIT_COMMIT="v0.33.0"
 ARG BOOST_VERSION_1="1.89.0"
 ARG BOOST_VERSION_2="1_89_0"
 
@@ -40,20 +40,23 @@ RUN cd snapweb \
     && npm ci \
     && npm run build
 
-FROM rust:1-bookworm as build-librespot
 
-ARG GIT_COMMIT="v0.7.1"
+FROM golang:1.25-trixie as build-librespot
+
+ARG GIT_COMMIT="v0.4.0"
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends
-RUN apt-get install -y --no-install-recommends ca-certificates git build-essential pkg-config libasound2-dev
+RUN apt-get install -y --no-install-recommends ca-certificates git build-essential pkg-config libasound2-dev libogg-dev libvorbis-dev tree
 
 WORKDIR /librespot
-RUN git clone https://github.com/librespot-org/librespot.git \
-    && cd librespot \
-    && git checkout ${GIT_COMMIT}
+RUN git clone https://github.com/devgianlu/go-librespot.git \
+&& cd go-librespot \
+&& git checkout ${GIT_COMMIT}
 
-RUN cd librespot \
-    && cargo build --release --no-default-features --features "alsa-backend native-tls with-libmdns"
+RUN cd go-librespot \
+&& go build -v ./cmd/daemon
+RUN tree .
+
 
 FROM debian:12 as build-shairport
 
@@ -98,6 +101,8 @@ RUN apt-get install -y --no-install-recommends  \
     libpopt-dev  \
     libconfig-dev  \
     libssl-dev \
+    python3-requests \
+    python3-websocket \
     gstreamer1.0-tools \
     gstreamer1.0-plugins-base \
     gstreamer1.0-plugins-good \
@@ -105,10 +110,14 @@ RUN apt-get install -y --no-install-recommends  \
 
 
 COPY --from=build-snapcast /app/snapcast/bin/* /app/
+COPY --from=build-snapcast /app/snapcast/server/etc/plug-ins/meta_go-librespot.py /app/
 COPY --from=build-snapweb /app/snapweb/build /app/snapweb
-COPY --from=build-librespot /librespot/librespot/target/release/librespot /app/
+#COPY --from=build-librespot /librespot/librespot/target/release/librespot /app/
+COPY --from=build-librespot /librespot/go-librespot/daemon /app/go-librespot
 COPY --from=build-shairport /shairport/shairport-sync/shairport-sync /app/
 COPY avahi.conf /etc/avahi/avahi-daemon.conf
+CMD mkdir -p /app/go-librespot-config
+COPY librespot-config.yaml /app/go-librespot-config/config.yaml
 CMD mkdir -p /run/dbus
 COPY run.sh /app/run.sh
 
